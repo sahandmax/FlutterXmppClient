@@ -6,6 +6,7 @@ class StateResponse {
   String CheckResponse;
   String SendRequest;
 
+
   StateResponse(this.CheckResponse, this.SendRequest);
 }
 
@@ -14,13 +15,15 @@ class XmppConnection {
   int _port;
   int _state = 0; // TODO make enum
   Socket _socket = null;
+  XmppCallbacks xmppCallbacks;
 
   Completer _completer;
 
-  XmppConnection(String host, int port, String _username, String _password,
-      String _resource, String ajandToken) {
+  XmppConnection(xmppCallbacks , String host, int port, String _username, String _password,
+      String _resource) {
     _host = host;
     _port = port;
+    this.xmppCallbacks = xmppCallbacks;
     List<int> authBytePlainText = [];
     authBytePlainText.add(0);
     authBytePlainText.addAll(utf8.encode(_username));
@@ -29,15 +32,9 @@ class XmppConnection {
     _stateResponses = [
       new StateResponse('',
           '<stream:stream xmlns:stream="http://etherx.jabber.org/streams" version="1.0" xmlns="jabber:client" to="$_host" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">'),
-      ajandToken == ""
-          ? new StateResponse(
+       new StateResponse(
               'stream:stream',
-              '<auth xmlns="urn:ietf:params:xml:ns:xmpp-sasl" mechanism="PLAIN">' + base64Encode(authBytePlainText) + '</auth>')
-          : new StateResponse(
-              'stream:stream',
-              '<auth xmlns="urn:ietf:params:xml:ns:xmpp-sasl" mechanism="AJAND">' +
-                  base64Encode(utf8.encode(ajandToken)) +
-                  '</auth>'),
+              '<auth xmlns="urn:ietf:params:xml:ns:xmpp-sasl" mechanism="PLAIN">' + base64Encode(authBytePlainText) + '</auth>'),
       new StateResponse('',
           '<iq type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><resource>$_resource</resource></bind></iq>'),
       new StateResponse('',
@@ -64,7 +61,7 @@ class XmppConnection {
   void ProcessResponse(String response) {
     print('ProcessResponse');
     print(response);
-    XmppParser.parse(response,_socket,this);
+    XmppParser.parse(xmppCallbacks , response,_socket,this);
 //    // TODO
 //    if (response.length > 0) {
 //      print('xml parse...');

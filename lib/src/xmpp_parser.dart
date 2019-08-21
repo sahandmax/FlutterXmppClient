@@ -1,10 +1,11 @@
 part of xmpp;
 
 class XmppParser {
-  static String messages = "";
-  static void parse(
-      String xmppResponse, Socket _socket, XmppConnection xmppConnection) {
-
+  String messages = "";
+  XmppCallbacks xmppCallbacks;
+  void parse(
+      xmppCallbacks , String xmppResponse, Socket _socket, XmppConnection xmppConnection) {
+    this.xmppCallbacks = xmppCallbacks;
 
     if(xmppResponse.split("<message ").length > 2)  {
       if ( xmppResponse[xmppResponse.length - 1] != ">")
@@ -28,8 +29,8 @@ class XmppParser {
         String presence = xmppResponse.substring(xmppResponse.indexOf(
             "<presence",
             xmppResponse.indexOf("</presence>") + "</presence>".length));
-        parse(iq, _socket, xmppConnection);
-        parse(presence, _socket, xmppConnection);
+        parse( xmppCallbacks, iq, _socket, xmppConnection);
+        parse(xmppCallbacks ,presence, _socket, xmppConnection);
         return;
       }
       XmlDocument doc = xml.parse(xmppResponse);
@@ -57,7 +58,8 @@ class XmppParser {
 //                builder.attribute('type', 'unsubscribe');
 //              });
 //              _socket.write(builder.build());
-              XmppSql.deleteUserByJid(xmlElement.getAttribute("from"));
+              this.xmppCallbacks.onDeleteUserByJid(xmlElement.getAttribute("from"));
+
               builder = new XmlBuilder();
               builder.processing('xml', 'version="1.0"');
               builder.element('presence', nest: () {
